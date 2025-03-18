@@ -125,12 +125,14 @@ internal class Renderer(
     val buildClass = try {
       classLoader.loadClass("android.os.Build")
     } catch (e: ClassNotFoundException) {
+      throw RuntimeException("Failed to load android.os.Build")
       // Project unit tests don't load Android platform code
       return
     }
     val originalBuildClass = try {
       classLoader.loadClass("android.os._Original_Build")
     } catch (e: ClassNotFoundException) {
+      throw RuntimeException("Failed to load android.os._Original_Build")
       // Project unit tests don't load Android platform code
       return
     }
@@ -140,6 +142,7 @@ internal class Renderer(
         val originalField = originalBuildClass.getField(it.name)
         buildClass.getFieldReflectively(it.name).setStaticValue(originalField.get(null))
       } catch (e: NoSuchFieldException) {
+        throw RuntimeException("Failed to set field ${it.name} in android.os.Build")
         // android.os._Original_Build from layoutlib doesn't have this field, it's probably new.
         // Just ignore it and keep the value in android.os.Build
       }
@@ -153,6 +156,7 @@ internal class Renderer(
             val originalField = originalInnerClass.getField(it.name)
             inner.getFieldReflectively(it.name).setStaticValue(originalField.get(null))
           } else {
+            throw NoSuchFieldException("Original inner class not found: ${inner.simpleName}")
             // Not found
           }
         } catch (e: NoSuchFieldException) {
